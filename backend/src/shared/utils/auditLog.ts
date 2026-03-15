@@ -45,7 +45,7 @@ export async function auditLog({ userId, action, metadata }: AuditOptions): Prom
       data: {
         userId,
         action,
-        metadata: metadata ?? {},
+        metadata: (metadata ?? {}) as any,
       },
     });
   } catch (err) {
