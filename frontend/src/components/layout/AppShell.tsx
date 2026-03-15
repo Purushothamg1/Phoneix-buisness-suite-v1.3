@@ -3,6 +3,7 @@ import { useEffect, useCallback, useState, createContext, useContext } from 'rea
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import Sidebar from '@/components/layout/Sidebar';
+import Image from 'next/image';
 
 interface LayoutContextType { sidebarOpen: boolean; toggleSidebar: () => void; }
 export const LayoutContext = createContext<LayoutContextType>({ sidebarOpen: true, toggleSidebar: () => {} });
@@ -47,7 +48,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center gap-3">
-          <img src="/logo.png" alt="Phoenix" className="w-16 h-16 object-contain rounded-2xl opacity-80" />
+          <Image src="/logo.png" alt="Phoenix" width={64} height={64} className="w-16 h-16 object-contain rounded-2xl opacity-80" />
           <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
@@ -73,7 +74,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <button onClick={() => setMobileMenuOpen(true)} className="p-2 rounded-lg hover:bg-gray-100">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
-            <img src="/logo.png" alt="Phoenix" className="w-7 h-7 object-contain rounded-lg" />
+            <Image src="/logo.png" alt="Phoenix" width={28} height={28} className="w-7 h-7 object-contain rounded-lg" />
             <span className="font-bold text-gray-900 text-sm">Phoenix</span>
           </div>
 

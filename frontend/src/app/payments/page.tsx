@@ -3,7 +3,7 @@ import { useState } from 'react';
 import useSWR from 'swr';
 import AppShell from '@/components/layout/AppShell';
 import { PageHeader, Modal, FormField, StatusBadge, Spinner } from '@/components/ui';
-import { Plus, RotateCcw, CreditCard, TrendingUp, DollarSign, AlertCircle, Search } from 'lucide-react';
+import { Plus, RotateCcw, CreditCard, DollarSign, AlertCircle, Search, RefreshCcw } from 'lucide-react';
 import { formatCurrency, formatDateTime, getErrorMessage } from '@/lib/utils';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -191,7 +191,7 @@ export default function PaymentsPage() {
             <div className="flex gap-2">
               <input className="input flex-1" placeholder="Invoice # or customer name…" value={invoiceSearch} onChange={(e) => setInvoiceSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), lookupInvoice())} />
               <button type="button" className="btn-secondary btn-sm px-3" onClick={lookupInvoice} disabled={lookingUp}>
-                {lookingUp ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+                {lookingUp ? <RefreshCcw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
               </button>
             </div>
           </div>

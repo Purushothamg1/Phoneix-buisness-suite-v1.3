@@ -7,10 +7,16 @@ import { getErrorMessage } from '@/lib/utils';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 
+interface ImportResult {
+  imported: number;
+  skipped: number;
+  errors: string[];
+}
+
 export default function ImportExportPage() {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<any>(null);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [exporting, setExporting] = useState('');
 
   async function handleImport() {
@@ -74,7 +80,7 @@ export default function ImportExportPage() {
                 {importResult.skipped > 0 && <div className="flex items-center gap-2 text-yellow-600"><XCircle className="w-4 h-4" /><span className="text-sm">{importResult.skipped} rows skipped</span></div>}
                 {importResult.errors?.length > 0 && (
                   <div className="bg-red-50 rounded-lg p-2 mt-2">
-                    {importResult.errors.slice(0, 3).map((e: string, i: number) => <p key={i} className="text-xs text-red-600">{e}</p>)}
+                    {importResult.errors.slice(0, 3).map((e, i) => <p key={i} className="text-xs text-red-600">{e}</p>)}
                     {importResult.errors.length > 3 && <p className="text-xs text-red-400">+{importResult.errors.length - 3} more errors</p>}
                   </div>
                 )}

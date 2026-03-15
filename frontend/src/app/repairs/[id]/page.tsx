@@ -6,20 +6,39 @@ import { useState } from 'react';
 import AppShell from '@/components/layout/AppShell';
 import { StatusBadge, Modal, FormField, Spinner } from '@/components/ui';
 import { formatCurrency, formatDate, getErrorMessage, downloadFile } from '@/lib/utils';
-import { FileDown, Send, Pencil, ArrowLeft, RefreshCw, FileText, ExternalLink } from 'lucide-react';
+import { FileDown, Send, Pencil, ArrowLeft, RefreshCw, FileText } from 'lucide-react';
 import api from '@/lib/api';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 
 const fetcher = (url: string) => api.get(url).then((r) => r.data);
 const STATUSES = ['RECEIVED','DIAGNOSING','WAITING_FOR_PARTS','IN_REPAIR','READY','DELIVERED'];
+
 interface ShareResult { pdfUrl: string; pdfName: string; whatsappUrl: string; phone: string; message: string; downloadUrl: string; }
+interface Repair {
+  id: string;
+  jobId: string;
+  customer: { name: string; phone: string; email?: string; };
+  deviceType: string;
+  brand: string;
+  model: string;
+  serialNumber?: string;
+  issueDescription: string;
+  repairNotes?: string;
+  estimatedCost?: number;
+  finalCost?: number;
+  status: string;
+  createdAt: string;
+  technician?: { name: string; };
+  parts: { id: string; product: { name: string; sku: string; }; qty: number; cost: number; }[];
+  pdfUrl?: string;
+}
 
 export default function RepairDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuth();
-  const { data: repair, isLoading, mutate } = useSWR(`/repairs/${id}`, fetcher);
+  const { data: repair, isLoading, mutate } = useSWR<Repair>(`/repairs/${id}`, fetcher);
   const [editModal, setEditModal] = useState(false);
   const [form, setForm] = useState({ status:'', repairNotes:'', finalCost:'' });
   const [saving, setSaving] = useState(false);
@@ -31,10 +50,10 @@ export default function RepairDetailPage() {
   const [invoiceDiscount, setInvoiceDiscount] = useState('0');
 
   const canManage = user?.role === 'ADMIN' || user?.role === 'MANAGER';
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || '';
   const canCreateInvoice = canManage && repair && ['READY','DELIVERED'].includes(repair.status);
 
   const openEdit = () => {
+    if (!repair) return;
     setForm({ status: repair.status, repairNotes: repair.repairNotes || '', finalCost: repair.finalCost ? String(repair.finalCost) : '' });
     setEditModal(true);
   };
@@ -54,7 +73,7 @@ export default function RepairDetailPage() {
       toast.loading('Preparing PDF…', { id: 'pdf-repair' });
       await downloadFile(`/api/repairs/${id}/pdf/download`, repair?.pdfUrl?.split('/').pop() || `${repair?.jobId}.pdf`);
       toast.success('PDF download started', { id: 'pdf-repair' });
-    } catch (err) { toast.error('Download failed', { id: 'pdf-repair' }); }
+    } catch { toast.error('Download failed', { id: 'pdf-repair' }); }
     finally { setPdfLoading(false); }
   };
 
@@ -140,7 +159,7 @@ export default function RepairDetailPage() {
                     <th className="table-header text-right">Unit Cost</th><th className="table-header text-right">Total</th>
                   </tr></thead>
                   <tbody>
-                    {repair.parts.map((p: any) => (
+                    {repair.parts.map((p) => (
                       <tr key={p.id} className="table-row">
                         <td className="table-cell"><p className="font-semibold">{p.product?.name}</p><p className="text-xs text-gray-400">{p.product?.sku}</p></td>
                         <td className="table-cell text-right">{p.qty}</td>
@@ -198,7 +217,7 @@ export default function RepairDetailPage() {
           <div className="bg-blue-50 rounded-xl p-3 text-sm space-y-1">
             <p className="font-semibold text-gray-900">{repair.customer?.name}</p>
             <p className="text-gray-600">{repair.brand} {repair.model}</p>
-            {(repair.finalCost || repair.estimatedCost) && <p className="text-blue-700 font-semibold">Cost: {formatCurrency(repair.finalCost || repair.estimatedCost)}</p>}
+            {(repair.finalCost || repair.estimatedCost) && <p className="text-blue-700 font-semibold">Cost: {formatCurrency(repair.finalCost || repair.estimatedCost || 0)}</p>}
           </div>
           <FormField label="Discount (optional)">
             <input className="input" type="number" min="0" step="0.01" value={invoiceDiscount} onChange={(e) => setInvoiceDiscount(e.target.value)} placeholder="0.00" />

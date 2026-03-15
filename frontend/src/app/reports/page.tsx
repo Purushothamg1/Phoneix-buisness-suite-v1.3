@@ -4,7 +4,7 @@ import useSWR from 'swr';
 import AppShell from '@/components/layout/AppShell';
 import { PageHeader, StatCard } from '@/components/ui';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { TrendingUp, Package, Wrench, DollarSign, Download } from 'lucide-react';
+import { TrendingUp, Package, DollarSign, Download } from 'lucide-react';
 import { formatCurrency, formatDate, STATUS_COLORS } from '@/lib/utils';
 import api from '@/lib/api';
 

@@ -1,0 +1,4 @@
+node_modules
+dist
+.env
+backend/src/config/database.ts

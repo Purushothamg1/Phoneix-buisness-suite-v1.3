@@ -10,11 +10,13 @@ import api from '@/lib/api';
 import Link from 'next/link';
 
 interface LineItem { productId: string; description: string; qty: number; unitPrice: number; tax: number; }
+interface Customer { id: string; name: string; phone: string; }
+interface Product { id: string; name: string; sellingPrice: number; stockQty: number; }
 
 export default function NewInvoicePage() {
   const router = useRouter();
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [customerId, setCustomerId] = useState('');
   const [discount, setDiscount] = useState(0);
   const [items, setItems] = useState<LineItem[]>([{ productId: '', description: '', qty: 1, unitPrice: 0, tax: 18 }]);
@@ -44,12 +46,12 @@ export default function NewInvoicePage() {
   const addItem = () => setItems([...items, { productId: '', description: '', qty: 1, unitPrice: 0, tax: 18 }]);
   const removeItem = (i: number) => setItems(items.filter((_, idx) => idx !== i));
 
-  const updateItem = (i: number, key: keyof LineItem, value: any) => {
+  const updateItem = (i: number, key: keyof LineItem, value: string | number) => {
     const updated = [...items];
     updated[i] = { ...updated[i], [key]: value };
     if (key === 'productId' && value) {
       const p = products.find((p) => p.id === value);
-      if (p) { updated[i].description = p.name; updated[i].unitPrice = parseFloat(p.sellingPrice); }
+      if (p) { updated[i].description = p.name; updated[i].unitPrice = parseFloat(p.sellingPrice.toString()); }
     }
     setItems(updated);
   };

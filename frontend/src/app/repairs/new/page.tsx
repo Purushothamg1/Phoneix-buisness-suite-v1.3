@@ -5,19 +5,23 @@ import toast from 'react-hot-toast';
 import { Plus, Trash2, ArrowLeft, UserPlus } from 'lucide-react';
 import AppShell from '@/components/layout/AppShell';
 import { PageHeader, FormField, Modal } from '@/components/ui';
-import { formatCurrency, getErrorMessage } from '@/lib/utils';
+import { getErrorMessage, formatCurrency } from '@/lib/utils';
 import api from '@/lib/api';
 import Link from 'next/link';
 
 interface Part { productId: string; qty: number; cost: number; }
+interface Customer { id: string; name: string; phone: string; }
+interface Product { id: string; name: string; sellingPrice: number; stockQty: number; }
+interface Technician { id: string; name: string; }
+
 const DEVICE_TYPES = ['Smartphone','Tablet','Laptop','Desktop','Smartwatch','Gaming Console','Other'];
 const EMPTY_FORM = { customerId:'', deviceType:'Smartphone', brand:'', model:'', serialNumber:'', issueDescription:'', technicianId:'', estimatedCost:'' };
 
 export default function NewRepairPage() {
   const router = useRouter();
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
-  const [technicians, setTechnicians] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [customerSearch, setCustomerSearch] = useState('');
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -42,7 +46,7 @@ export default function NewRepairPage() {
   const updatePart = (i: number, key: keyof Part, value: string|number) => {
     const updated = [...parts];
     updated[i] = { ...updated[i], [key]: value };
-    if (key === 'productId' && value) { const p = products.find((p) => p.id === value); if (p) updated[i].cost = parseFloat(p.sellingPrice); }
+    if (key === 'productId' && value) { const p = products.find((p) => p.id === value); if (p) updated[i].cost = p.sellingPrice; }
     setParts(updated);
   };
 
@@ -189,7 +193,7 @@ export default function NewRepairPage() {
         <div className="space-y-4">
           <FormField label="Full Name" required><input className="input" value={newCust.name} onChange={(e) => setNewCust({...newCust, name:e.target.value})} placeholder="John Doe" /></FormField>
           <FormField label="Phone" required><input className="input" value={newCust.phone} onChange={(e) => setNewCust({...newCust, phone:e.target.value})} placeholder="+91 9999999999" /></FormField>
-          <FormField label="Email"><input className="input" type="email" value={newCust.email} onChange={(e) => setNewCust({...newCust, email:e.target.value})} /></FormField>
+          <FormField label="Email"><input className="input" type="email" value={newCust.email} onChange={(e) => setNewCust({...newCust, email:e.target.value})} placeholder="john@example.com" /></FormField>
           <div className="flex gap-3 justify-end pt-2">
             <button onClick={() => setNewCustModal(false)} className="btn-secondary">Cancel</button>
             <button onClick={handleSaveCustomer} disabled={savingCust} className="btn-primary">{savingCust ? 'Adding…' : 'Add Customer'}</button>

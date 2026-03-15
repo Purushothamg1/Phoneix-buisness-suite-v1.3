@@ -6,18 +6,40 @@ import { useState } from 'react';
 import AppShell from '@/components/layout/AppShell';
 import { StatusBadge, ConfirmDialog, Spinner, Modal, FormField } from '@/components/ui';
 import { formatCurrency, formatDate, formatDateTime, getErrorMessage, downloadFile } from '@/lib/utils';
-import { FileDown, Send, XCircle, ArrowLeft, CreditCard, RefreshCw, ExternalLink, Check } from 'lucide-react';
+import { FileDown, Send, XCircle, ArrowLeft, CreditCard, RefreshCw, Check } from 'lucide-react';
 import api from '@/lib/api';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 
 const fetcher = (url: string) => api.get(url).then((r) => r.data);
+
 interface ShareResult { pdfUrl: string; pdfName: string; whatsappUrl: string; phone: string; message: string; downloadUrl: string; }
+interface Payment {
+  id: string;
+  amount: number;
+  method: string;
+  refunded: boolean;
+  createdAt: string;
+}
+
+interface Invoice {
+  id: string;
+  number: string;
+  customer: { name: string; phone: string; email?: string; address?: string; };
+  items: { id: string; description: string; qty: number; unitPrice: number; tax: number; total: number; product?: { sku: string; }; }[];
+  totalAmount: number;
+  taxAmount: number;
+  discount: number;
+  status: string;
+  createdAt: string;
+  payments: Payment[];
+  pdfUrl?: string;
+}
 
 export default function InvoiceDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { data: inv, isLoading, mutate } = useSWR(`/invoices/${id}`, fetcher);
+  const { data: inv, isLoading, mutate } = useSWR<Invoice>(`/invoices/${id}`, fetcher);
   const [showCancel, setShowCancel] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [payModal, setPayModal] = useState(false);
@@ -28,7 +50,6 @@ export default function InvoiceDetailPage() {
   const [shareLoading, setShareLoading] = useState(false);
 
   const canManage = user?.role === 'ADMIN' || user?.role === 'MANAGER';
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || '';
 
   const handleDownloadPdf = async () => {
     setPdfLoading(true);
@@ -36,7 +57,7 @@ export default function InvoiceDetailPage() {
       toast.loading('Preparing PDF…', { id: 'pdf' });
       await downloadFile(`/api/invoices/${id}/pdf/download`, inv?.pdfUrl?.split('/').pop() || `${inv?.number}.pdf`);
       toast.success('PDF download started', { id: 'pdf' });
-    } catch (err) { toast.error('PDF download failed', { id: 'pdf' }); }
+    } catch { toast.error('PDF download failed', { id: 'pdf' }); }
     finally { setPdfLoading(false); }
   };
 
@@ -44,7 +65,6 @@ export default function InvoiceDetailPage() {
     setShareLoading(true);
     try {
       const { data: share } = await api.post('/import-export/prepare-send', { type: 'invoice', id });
-      // Simultaneously trigger PDF download
       try { await downloadFile(share.downloadUrl, share.pdfName); } catch { /* silent */ }
       setSharePreview(share);
       mutate();
@@ -72,7 +92,7 @@ export default function InvoiceDetailPage() {
   if (isLoading) return <AppShell><div className="flex justify-center py-20"><Spinner size="lg" /></div></AppShell>;
   if (!inv) return <AppShell><div className="text-center py-20 text-gray-400">Invoice not found</div></AppShell>;
 
-  const paidAmount = (inv.payments ?? []).filter((p: any) => !p.refunded).reduce((s: number, p: any) => s + Number(p.amount), 0);
+  const paidAmount = (inv.payments ?? []).filter((p) => !p.refunded).reduce((s, p) => s + Number(p.amount), 0);
   const outstanding = Math.max(0, Number(inv.totalAmount) - paidAmount);
   const subtotal = Number(inv.totalAmount) - Number(inv.taxAmount) + Number(inv.discount);
 
@@ -128,7 +148,7 @@ export default function InvoiceDetailPage() {
                   <th className="table-header text-right">Total</th>
                 </tr></thead>
                 <tbody>
-                  {(inv.items ?? []).map((item: any) => (
+                  {(inv.items ?? []).map((item) => (
                     <tr key={item.id} className="table-row">
                       <td className="table-cell"><p className="font-semibold text-gray-900">{item.description}</p>{item.product && <p className="text-xs text-gray-400">SKU: {item.product.sku}</p>}</td>
                       <td className="table-cell text-right">{item.qty}</td>
@@ -174,7 +194,7 @@ export default function InvoiceDetailPage() {
             <div className="card">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Payment History</p>
               <div className="space-y-2">
-                {inv.payments.map((p: any) => (
+                {inv.payments.map((p) => (
                   <div key={p.id} className={`flex items-center justify-between text-sm py-2 border-b border-gray-50 last:border-0 ${p.refunded ? 'opacity-40' : ''}`}>
                     <div><p className="font-semibold text-gray-800">{p.method.replace('_',' ')}</p><p className="text-xs text-gray-400">{formatDateTime(p.createdAt)}</p></div>
                     <div className="text-right">
