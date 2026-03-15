@@ -77,9 +77,10 @@
       "@/(.*)": "<rootDir>/src/$1"
     },
     "forceExit": true
-  }
-  ,
+  },
+"forceExit": true
+},
 "prisma": {
-  "seed": "./prisma/seed.sh"
+  "seed": "ts-node src/config/seed.ts"
 }
 }
