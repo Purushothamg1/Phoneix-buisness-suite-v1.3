@@ -1,0 +1,229 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  STAFF
+}
+
+enum InvoiceStatus {
+  PAID
+  UNPAID
+  PARTIAL
+  CANCELLED
+}
+
+enum RepairStatus {
+  RECEIVED
+  DIAGNOSING
+  WAITING_FOR_PARTS
+  IN_REPAIR
+  READY
+  DELIVERED
+}
+
+enum MovementType {
+  SALE
+  PURCHASE
+  ADJUSTMENT
+  REPAIR_USAGE
+  RETURN
+}
+
+enum PaymentMethod {
+  CASH
+  UPI
+  CARD
+  BANK_TRANSFER
+}
+
+model User {
+  id         String     @id @default(uuid())
+  email      String     @unique
+  password   String
+  name       String
+  role       Role       @default(STAFF)
+  createdAt  DateTime   @default(now())
+  repairs    RepairJob[] @relation("TechnicianRepairs")
+  auditLogs  AuditLog[]
+
+  @@index([email])
+}
+
+model Customer {
+  id        String     @id @default(uuid())
+  name      String
+  phone     String
+  email     String?
+  address   String?
+  notes     String?
+  createdAt DateTime   @default(now())
+  invoices  Invoice[]
+  repairs   RepairJob[]
+
+  @@index([phone])
+  @@index([name])
+}
+
+model Supplier {
+  id           String    @id @default(uuid())
+  name         String
+  phone        String
+  email        String?
+  address      String?
+  paymentTerms String?
+  createdAt    DateTime  @default(now())
+
+  @@index([name])
+}
+
+model Product {
+  id            String          @id @default(uuid())
+  name          String
+  sku           String          @unique
+  barcode       String?         @unique
+  category      String?
+  imageUrl      String?
+  purchasePrice Decimal         @db.Decimal(12,2)
+  sellingPrice  Decimal         @db.Decimal(12,2)
+  stockQty      Int             @default(0)
+  minStockLevel Int             @default(5)
+  createdAt     DateTime        @default(now())
+  movements     StockMovement[]
+  invoiceItems  InvoiceItem[]
+  repairParts   RepairPart[]
+
+  @@index([sku])
+  @@index([barcode])
+  @@index([name])
+  @@index([category])
+}
+
+model StockMovement {
+  id           String       @id @default(uuid())
+  productId    String
+  product      Product      @relation(fields: [productId], references: [id])
+  movementType MovementType
+  quantity     Int
+  note         String?
+  createdAt    DateTime     @default(now())
+
+  @@index([productId])
+  @@index([createdAt])
+}
+
+model Invoice {
+  id          String        @id @default(uuid())
+  number      String        @unique
+  prefix      String        @default("INV")
+  customerId  String
+  customer    Customer      @relation(fields: [customerId], references: [id])
+  status      InvoiceStatus @default(UNPAID)
+  taxAmount   Decimal       @default(0) @db.Decimal(12,2)
+  discount    Decimal       @default(0) @db.Decimal(12,2)
+  totalAmount Decimal       @db.Decimal(12,2)
+  pdfUrl      String?
+  createdAt   DateTime      @default(now())
+  items       InvoiceItem[]
+  payments    Payment[]
+
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([number])
+}
+
+model InvoiceItem {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id])
+  description String
+  qty         Int
+  unitPrice   Decimal  @db.Decimal(12,2)
+  tax         Decimal  @default(0) @db.Decimal(5,2)
+  total       Decimal  @db.Decimal(12,2)
+
+  @@index([invoiceId])
+}
+
+model RepairJob {
+  id               String       @id @default(uuid())
+  jobId            String       @unique
+  customerId       String
+  customer         Customer     @relation(fields: [customerId], references: [id])
+  deviceType       String
+  brand            String
+  model            String
+  serialNumber     String?
+  issueDescription String
+  repairNotes      String?
+  technicianId     String?
+  technician       User?        @relation("TechnicianRepairs", fields: [technicianId], references: [id])
+  status           RepairStatus @default(RECEIVED)
+  estimatedCost    Decimal?     @db.Decimal(12,2)
+  finalCost        Decimal?     @db.Decimal(12,2)
+  pdfUrl           String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  parts            RepairPart[]
+
+  @@index([customerId])
+  @@index([status])
+  @@index([jobId])
+  @@index([createdAt])
+}
+
+model RepairPart {
+  id          String    @id @default(uuid())
+  repairJobId String
+  repairJob   RepairJob @relation(fields: [repairJobId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id])
+  qty         Int
+  cost        Decimal   @db.Decimal(12,2)
+
+  @@index([repairJobId])
+}
+
+model Payment {
+  id        String        @id @default(uuid())
+  invoiceId String
+  invoice   Invoice       @relation(fields: [invoiceId], references: [id])
+  amount    Decimal       @db.Decimal(12,2)
+  method    PaymentMethod
+  refunded  Boolean       @default(false)
+  createdAt DateTime      @default(now())
+
+  @@index([invoiceId])
+  @@index([createdAt])
+}
+
+model Setting {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String
+
+  @@index([key])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}

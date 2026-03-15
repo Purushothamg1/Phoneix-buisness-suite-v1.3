@@ -1,0 +1,26 @@
+version: '3.9'
+
+# Development overrides — run with: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      target: deps
+    command: npm run dev
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/prisma:/app/prisma
+      - uploads_data:/app/uploads
+    environment:
+      NODE_ENV: development
+
+  frontend:
+    command: npm run dev
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:5000

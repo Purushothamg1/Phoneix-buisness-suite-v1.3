@@ -1,0 +1,47 @@
+# Phoenix Business Suite — Render deployment configuration
+# Docs: https://render.com/docs/render-yaml
+services:
+  - type: web
+    name: phoenix-api
+    runtime: node
+    region: oregon
+    plan: free                          # upgrade to starter ($7/mo) for production
+    rootDir: backend
+    buildCommand: npm ci && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && node dist/server.js
+    healthCheckPath: /health
+    autoDeploy: true
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: phoenix-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true             # Render auto-generates a secure secret
+      - key: JWT_EXPIRES_IN
+        value: 8h
+      - key: FRONTEND_URL
+        value: https://phoenix-suite.vercel.app   # update after Vercel deploy
+      - key: APP_URL
+        value: https://phoenix-api.onrender.com    # update to your Render URL
+      - key: UPLOAD_DIR
+        value: /opt/render/project/src/uploads     # persistent disk mount path
+      - key: RATE_LIMIT_MAX
+        value: 300
+
+    disk:
+      name: uploads
+      mountPath: /opt/render/project/src/uploads
+      sizeGB: 1                         # increase for more storage
+
+databases:
+  - name: phoenix-db
+    databaseName: phoenix
+    plan: free                          # free tier expires after 90 days — use paid for production
+    region: oregon
+    ipAllowList: []                     # allow all IPs (restrict after setup)
