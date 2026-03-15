@@ -140,7 +140,7 @@ export const repairService = {
     }
     return prisma.repairJob.update({
       where: { id },
-      data,
+      data: data as any,
       include: {
         customer: true,
         technician: { select: { id: true, name: true } },
