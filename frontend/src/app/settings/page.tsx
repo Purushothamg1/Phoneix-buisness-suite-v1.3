@@ -7,6 +7,7 @@ import { Save, Upload, Building2, FileText, MessageCircle, Cpu, ShieldCheck, Eye
 import { getErrorMessage } from '@/lib/utils';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
+import Image from 'next/image';
 
 const fetcher = (url: string) => api.get(url).then((r) => r.data);
 
@@ -162,10 +163,12 @@ export default function SettingsPage() {
               <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Business Logo</h2>
               {form.logo_url && (
                 <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                  <img
+                  <Image
                     src={`${process.env.NEXT_PUBLIC_API_URL}${form.logo_url}`}
                     alt="Business logo"
                     className="h-16 object-contain"
+                    width={100}
+                    height={100}
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                   />
                   <div>

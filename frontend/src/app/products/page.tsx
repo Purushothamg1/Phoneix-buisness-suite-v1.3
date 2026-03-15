@@ -10,25 +10,38 @@ import { formatCurrency, getErrorMessage } from '@/lib/utils';
 import api from '@/lib/api';
 
 const fetcher = (url: string) => api.get(url).then((r) => r.data);
-const EMPTY = { name:'', sku:'', barcode:'', category:'', purchasePrice:'', sellingPrice:'', stockQty:'0', minStockLevel:'5' };
+
+interface Product {
+  id: string;
+  name: string;
+  sku: string;
+  barcode?: string;
+  category?: string;
+  purchasePrice: number;
+  sellingPrice: number;
+  stockQty: number;
+  minStockLevel: number;
+}
+
+const EMPTY_FORM = { name:'', sku:'', barcode:'', category:'', purchasePrice:'', sellingPrice:'', stockQty:'0', minStockLevel:'5' };
 
 export default function ProductsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [modal, setModal] = useState<'create'|'edit'|'adjust'|null>(null);
-  const [selected, setSelected] = useState<any>(null);
-  const [deleteTarget, setDeleteTarget] = useState<any>(null);
-  const [form, setForm] = useState<any>(EMPTY);
+  const [selected, setSelected] = useState<Product | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+  const [form, setForm] = useState(EMPTY_FORM);
   const [adjust, setAdjust] = useState({ quantity:'', movementType:'PURCHASE', note:'' });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const { data, isLoading, mutate } = useSWR(`/products?page=${page}&limit=20&search=${encodeURIComponent(search)}`, fetcher);
 
-  const openCreate = () => { setForm(EMPTY); setSelected(null); setModal('create'); };
-  const openEdit = (p: any) => { setSelected(p); setForm({ name:p.name, sku:p.sku, barcode:p.barcode||'', category:p.category||'', purchasePrice:String(p.purchasePrice), sellingPrice:String(p.sellingPrice), stockQty:String(p.stockQty), minStockLevel:String(p.minStockLevel) }); setModal('edit'); };
-  const openAdjust = (p: any) => { setSelected(p); setAdjust({ quantity:'', movementType:'PURCHASE', note:'' }); setModal('adjust'); };
-  const f = (k: string) => (e: any) => setForm({ ...form, [k]: e.target.value });
+  const openCreate = () => { setForm(EMPTY_FORM); setSelected(null); setModal('create'); };
+  const openEdit = (p: Product) => { setSelected(p); setForm({ name:p.name, sku:p.sku, barcode:p.barcode||'', category:p.category||'', purchasePrice:String(p.purchasePrice), sellingPrice:String(p.sellingPrice), stockQty:String(p.stockQty), minStockLevel:String(p.minStockLevel) }); setModal('edit'); };
+  const openAdjust = (p: Product) => { setSelected(p); setAdjust({ quantity:'', movementType:'PURCHASE', note:'' }); setModal('adjust'); };
+  const f = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [k]: e.target.value });
 
   const handleSave = async () => {
     if (!form.name.trim() || !form.sku.trim()) { toast.error('Name and SKU are required'); return; }
@@ -36,14 +49,14 @@ export default function ProductsPage() {
     try {
       const payload = { ...form, purchasePrice:parseFloat(form.purchasePrice)||0, sellingPrice:parseFloat(form.sellingPrice)||0, stockQty:parseInt(form.stockQty)||0, minStockLevel:parseInt(form.minStockLevel)||5 };
       if (modal==='create') { await api.post('/products', payload); toast.success('Product created'); }
-      else { await api.put(`/products/${selected.id}`, payload); toast.success('Product updated'); }
+      else if (selected) { await api.put(`/products/${selected.id}`, payload); toast.success('Product updated'); }
       mutate(); setModal(null);
     } catch (err) { toast.error(getErrorMessage(err)); }
     finally { setSaving(false); }
   };
 
   const handleAdjust = async () => {
-    if (!adjust.quantity) { toast.error('Enter a quantity'); return; }
+    if (!adjust.quantity || !selected) { toast.error('Enter a quantity'); return; }
     setSaving(true);
     try {
       await api.post(`/products/${selected.id}/adjust-stock`, { ...adjust, quantity:parseInt(adjust.quantity) });
@@ -53,6 +66,7 @@ export default function ProductsPage() {
   };
 
   const handleDelete = async () => {
+    if (!deleteTarget) return;
     setDeleting(true);
     try { await api.delete(`/products/${deleteTarget.id}`); toast.success('Product deleted'); mutate(); setDeleteTarget(null); }
     catch (err) { toast.error(getErrorMessage(err)); }
@@ -60,21 +74,21 @@ export default function ProductsPage() {
   };
 
   const columns = [
-    { key:'name', header:'Product', render:(r:any) => (
+    { key:'name', header:'Product', render:(r: Product) => (
       <div className="flex items-center gap-3">
         <div className="w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0"><Package className="w-4 h-4 text-gray-400"/></div>
         <div className="min-w-0"><p className="font-semibold text-gray-900 truncate">{r.name}</p><p className="text-xs text-gray-400 font-mono">{r.sku}</p></div>
       </div>
     )},
-    { key:'category', header:'Category', className:'hidden md:table-cell', render:(r:any) => <span className="text-sm text-gray-600">{r.category||<span className="text-gray-300">—</span>}</span> },
-    { key:'sellingPrice', header:'Price', render:(r:any) => <span className="font-bold text-gray-900">{formatCurrency(r.sellingPrice)}</span> },
-    { key:'stock', header:'Stock', render:(r:any) => (
+    { key:'category', header:'Category', className:'hidden md:table-cell', render:(r: Product) => <span className="text-sm text-gray-600">{r.category||<span className="text-gray-300">—</span>}</span> },
+    { key:'sellingPrice', header:'Price', render:(r: Product) => <span className="font-bold text-gray-900">{formatCurrency(r.sellingPrice)}</span> },
+    { key:'stock', header:'Stock', render:(r: Product) => (
       <div className="flex items-center gap-1.5">
         <span className={`text-base font-bold ${r.stockQty<=r.minStockLevel?'text-red-600':'text-gray-900'}`}>{r.stockQty}</span>
         {r.stockQty<=r.minStockLevel && <AlertTriangle className="w-3.5 h-3.5 text-red-500"/>}
       </div>
     )},
-    { key:'actions', header:'', render:(r:any) => (
+    { key:'actions', header:'', render:(r: Product) => (
       <div className="flex items-center gap-1">
         <button onClick={() => openAdjust(r)} className="btn-ghost btn-sm text-blue-600 px-2">Adjust</button>
         <button onClick={() => openEdit(r)} className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg"><Pencil className="w-4 h-4"/></button>
@@ -91,7 +105,7 @@ export default function ProductsPage() {
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"/>
         <input className="input pl-10" placeholder="Name, SKU, barcode…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
       </div>
-      <DataTable columns={columns as any} data={data?.data||[]} meta={data?.meta} onPageChange={setPage} loading={isLoading} emptyMessage="No products found." keyExtractor={(r:any)=>r.id} />
+      <DataTable columns={columns as any} data={data?.data||[]} meta={data?.meta} onPageChange={setPage} loading={isLoading} emptyMessage="No products found." keyExtractor={(r: any)=>r.id} />
 
       <Modal open={modal==='create'||modal==='edit'} onClose={() => setModal(null)} title={modal==='create'?'Add Product':'Edit Product'} size="lg">
         <div className="grid grid-cols-2 gap-4">

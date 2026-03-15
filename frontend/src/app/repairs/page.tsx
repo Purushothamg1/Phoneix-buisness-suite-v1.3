@@ -69,7 +69,7 @@ export default function RepairsPage() {
       <div className="flex items-center gap-1">
         <Link href={`/repairs/${r.id}`} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg" title="View"><Eye className="w-4 h-4" /></Link>
         <button onClick={() => openUpdate(r)} className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg" title="Update"><Pencil className="w-4 h-4" /></button>
-        <button onClick={async () => { toast.loading('Preparing…',{id:`dl-${r.id}`}); try { await downloadFile(`/api/repairs/${r.id}/pdf/download`); toast.success('Downloading',{id:`dl-${r.id}`}); } catch(e){ toast.error('Download failed',{id:`dl-${r.id}`}); } }} className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg" title="Download PDF"><FileDown className="w-4 h-4" /></button>
+        <button onClick={async () => { toast.loading('Preparing…',{id:`dl-${r.id}`}); try { await downloadFile(`/api/repairs/${r.id}/pdf/download`); toast.success('Downloading',{id:`dl-${r.id}`}); } catch { toast.error('Download failed',{id:`dl-${r.id}`}); } }} className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg" title="Download PDF"><FileDown className="w-4 h-4" /></button>
         <button onClick={() => handleWhatsApp(r)} disabled={shareLoading === r.id} className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg" title="WhatsApp">
           {shareLoading === r.id ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </button>

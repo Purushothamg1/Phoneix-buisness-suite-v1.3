@@ -1,15 +1,14 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import AppShell from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/ui/components';
 import DataTable from '@/components/tables/DataTable';
 import { formatDateTime } from '@/lib/utils';
-import { Activity, Search } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 
 const fetcher = (url: string) => api.get(url).then((r) => r.data);
 
@@ -23,11 +22,22 @@ const ACTION_COLORS: Record<string, string> = {
   CUSTOMER_DELETED: 'badge-red', PRODUCT_DELETED: 'badge-red',
 };
 
+interface AuditLog {
+  id: string;
+  createdAt: string;
+  user: {
+    name: string;
+    email: string;
+    role: string;
+  };
+  action: string;
+  metadata: Record<string, unknown>;
+}
+
 export default function AuditPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
 
   useEffect(() => {
     if (user && user.role === 'STAFF') router.push('/dashboard');
@@ -38,16 +48,14 @@ export default function AuditPage() {
     fetcher,
   );
 
-  const { data: actions } = useSWR('/audit/actions', fetcher);
-
   const columns = [
     {
       key: 'createdAt', header: 'Time',
-      render: (r: any) => <span className="text-xs text-gray-500 whitespace-nowrap">{formatDateTime(r.createdAt)}</span>,
+      render: (r: AuditLog) => <span className="text-xs text-gray-500 whitespace-nowrap">{formatDateTime(r.createdAt)}</span>,
     },
     {
       key: 'user', header: 'User',
-      render: (r: any) => (
+      render: (r: AuditLog) => (
         <div>
           <p className="text-sm font-medium text-gray-900">{r.user?.name || '—'}</p>
           <p className="text-xs text-gray-400">{r.user?.email}</p>
@@ -56,7 +64,7 @@ export default function AuditPage() {
     },
     {
       key: 'action', header: 'Action',
-      render: (r: any) => (
+      render: (r: AuditLog) => (
         <span className={`badge ${ACTION_COLORS[r.action] || 'badge-gray'} font-mono text-xs`}>
           {r.action.replace(/_/g, ' ')}
         </span>
@@ -64,7 +72,7 @@ export default function AuditPage() {
     },
     {
       key: 'metadata', header: 'Details',
-      render: (r: any) => {
+      render: (r: AuditLog) => {
         const meta = r.metadata;
         if (!meta || Object.keys(meta).length === 0) return <span className="text-gray-300">—</span>;
         const entries = Object.entries(meta).slice(0, 3);
@@ -79,7 +87,7 @@ export default function AuditPage() {
     },
     {
       key: 'role', header: 'Role',
-      render: (r: any) => <span className="text-xs text-gray-500">{r.user?.role || '—'}</span>,
+      render: (r: AuditLog) => <span className="text-xs text-gray-500">{r.user?.role || '—'}</span>,
     },
   ];
 
