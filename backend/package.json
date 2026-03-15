@@ -79,6 +79,6 @@
     "forceExit": true
   },
 "prisma": {
-  "seed": "ts-node src/config/seed.ts"
+  "seed": "node --loader ts-node/esm src/config/seed.ts"
 }
 }
