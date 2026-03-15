@@ -16,6 +16,6 @@ if (process.env.NODE_ENV !== 'production') {
   global.__prisma = prisma;
 }
 
-prisma.$on('beforeExit', async () => {
+prisma.$on('beforeExit' as any, async () => {
   logger.info('Prisma client disconnecting...');
 });
