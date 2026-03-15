@@ -78,8 +78,6 @@
     },
     "forceExit": true
   },
-"forceExit": true
-},
 "prisma": {
   "seed": "ts-node src/config/seed.ts"
 }
