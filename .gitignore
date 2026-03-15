@@ -1,4 +1,5 @@
 node_modules
 dist
 .env
+.next
 backend/src/config/database.ts
