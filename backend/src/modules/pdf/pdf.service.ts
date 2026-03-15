@@ -72,7 +72,7 @@ const C_SLATE = '#1e293b';
 const C_GRAY = '#64748b';
 const C_LIGHT = '#f1f5f9';
 
-function drawHeader(doc: PDFKit.PDFDocument, settings: Record<string, string>): void {
+function drawHeader(doc: PDFDocument, settings: Record<string, string>): void {
   const businessName = settings.business_name || 'Business';
   const logoPath = tryGetLogoPath(settings.logo_url);
 
@@ -96,7 +96,7 @@ function drawHeader(doc: PDFKit.PDFDocument, settings: Record<string, string>): 
   if (settings.gst_number)       { doc.text(`GST: ${settings.gst_number}`, textX, infoY); }
 }
 
-function drawDivider(doc: PDFKit.PDFDocument, y: number, color = '#e2e8f0'): void {
+function drawDivider(doc: PDFDocument, y: number, color = '#e2e8f0'): void {
   doc.moveTo(50, y).lineTo(545, y).strokeColor(color).lineWidth(0.5).stroke();
 }
 
