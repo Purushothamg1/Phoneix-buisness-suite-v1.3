@@ -166,7 +166,7 @@ export const invoiceService = {
   async update(id: string, data: { discount?: number; status?: string }) {
     const invoice = await this.getById(id);
     if (invoice.status === 'CANCELLED') throw new ValidationError('Cannot update a cancelled invoice');
-    return prisma.invoice.update({ where: { id }, data });
+    return prisma.invoice.update({ where: { id }, data: data as any });
   },
 
   async cancel(id: string) {
