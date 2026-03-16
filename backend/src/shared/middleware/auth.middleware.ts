@@ -36,8 +36,8 @@ export const authenticate = async (
 
     const decoded = jwt.verify(token, secret) as { userId: string; role: Role };
 
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
+    const user = await prisma.user.findFirst({
+  where: { id: payload.userId, deletedAt: null },
       select: { id: true, role: true, email: true, name: true },
     });
 
