@@ -40,6 +40,9 @@ async function seed() {
     { key: 'whatsapp_phone',    value: '' },
     { key: 'whatsapp_message_template_invoice', value: '' },
     { key: 'whatsapp_message_template_repair',  value: '' },
+    { key: 'invoice_pdf_template', value: 'classic' },
+    { key: 'hsn_enabled',          value: '0' },
+    { key: 'ca_audit_enabled',     value: '0' },
   ];
 
   for (const s of settings) {
