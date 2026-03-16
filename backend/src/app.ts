@@ -23,7 +23,7 @@ import { searchRouter } from './modules/search/search.routes';
 import { uploadRouter } from './modules/upload/upload.routes';
 import { importExportRouter } from './modules/import-export/importExport.routes';
 import { auditRouter } from './modules/audit/audit.routes';
-
+import { caAuditRouter } from './modules/import-export/caAudit.routes';
 const app = express();
 
 // ── Request ID ────────────────────────────────────────────────────────
@@ -172,6 +172,7 @@ app.use('/api/search', searchLimiter, searchRouter);
 app.use('/api/upload', uploadRouter);
 app.use('/api/import-export', importExportRouter);
 app.use('/api/audit', auditRouter);
+app.use('/api/ca-audit', caAuditRouter);
 
 // ── 404 ───────────────────────────────────────────────────────────────
 app.use((req, res) => {
