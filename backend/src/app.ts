@@ -171,7 +171,6 @@ app.use('/api/search', searchLimiter, searchRouter);
 app.use('/api/upload', uploadRouter);
 app.use('/api/import-export', importExportRouter);
 app.use('/api/audit', auditRouter);
-app.use('/api/ca-audit', caAuditRouter);
 
 // ── 404 ───────────────────────────────────────────────────────────────
 app.use((req, res) => {
