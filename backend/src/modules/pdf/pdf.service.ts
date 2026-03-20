@@ -72,6 +72,15 @@ const C_SLATE = '#1e293b';
 const C_GRAY = '#64748b';
 const C_LIGHT = '#f1f5f9';
 
+/**
+ * PDFKit's built-in fonts (Helvetica/Times) only cover Latin-1.
+ * The ₹ symbol (U+20B9) is outside that range and renders as '¹'.
+ * Convert to an ASCII-safe equivalent for PDF output only.
+ */
+function pdfSafeCurrency(symbol: string): string {
+  return symbol === '₹' ? 'Rs.' : symbol;
+}
+
 function drawHeader(doc: PDFDocument, settings: Record<string, string>): void {
   const businessName = settings.business_name || 'Business';
   const logoPath = tryGetLogoPath(settings.logo_url);
@@ -122,7 +131,7 @@ export const pdfService = {
 
     const filename = `${safeName(invoice.customer.name)}-${invoice.number}.pdf`;
     const filepath = path.join(pdfDir, filename);
-    const currency = settings.currency_symbol || '₹';
+    const currency = pdfSafeCurrency(settings.currency_symbol || '₹');
     const appUrl = (process.env.APP_URL || '').replace(/\/$/, '');
     const qrText = appUrl ? `${appUrl}/invoices/${invoice.id}` : `Invoice: ${invoice.number}`;
     const qrDataUrl = await generateQrDataUrl(qrText);
@@ -313,7 +322,7 @@ export const pdfService = {
 
     const filename = `${safeName(repair.customer.name)}-${repair.jobId}.pdf`;
     const filepath = path.join(pdfDir, filename);
-    const currency = settings.currency_symbol || '₹';
+    const currency = pdfSafeCurrency(settings.currency_symbol || '₹');
     const appUrl = (process.env.APP_URL || '').replace(/\/$/, '');
     const qrText = appUrl ? `${appUrl}/repairs/${repair.id}` : `Repair: ${repair.jobId}`;
     const qrDataUrl = await generateQrDataUrl(qrText);
