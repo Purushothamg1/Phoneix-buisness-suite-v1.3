@@ -74,20 +74,10 @@ invoiceRouter.get('/:id/pdf/download',
       const invoice = await prisma.invoice.findUnique({ where: { id: req.params.id } });
       if (!invoice) throw new NotFoundError('Invoice');
 
-      // Generate if missing
-      let pdfUrl = invoice.pdfUrl;
-      if (!pdfUrl) {
-        pdfUrl = await pdfService.generateInvoicePdf(req.params.id);
-        await prisma.invoice.update({ where: { id: req.params.id }, data: { pdfUrl } });
-      }
-
-      const filePath = pdfService.getPdfFilePath(pdfUrl);
-
-      // Regenerate if file was deleted from disk
-      if (!fs.existsSync(filePath)) {
-        pdfUrl = await pdfService.generateInvoicePdf(req.params.id);
-        await prisma.invoice.update({ where: { id: req.params.id }, data: { pdfUrl } });
-      }
+      // Always regenerate so the PDF reflects the latest payment status.
+      // Serving a cached file would show UNPAID even after a payment is recorded.
+      const pdfUrl = await pdfService.generateInvoicePdf(req.params.id);
+      await prisma.invoice.update({ where: { id: req.params.id }, data: { pdfUrl } });
 
       const finalPath = pdfService.getPdfFilePath(pdfUrl);
       const filename = require('path').basename(finalPath);
