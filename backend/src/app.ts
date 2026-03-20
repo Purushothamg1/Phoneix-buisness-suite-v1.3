@@ -23,7 +23,6 @@ import { searchRouter } from './modules/search/search.routes';
 import { uploadRouter } from './modules/upload/upload.routes';
 import { importExportRouter } from './modules/import-export/importExport.routes';
 import { auditRouter } from './modules/audit/audit.routes';
-import { caAuditRouter } from './modules/import-export/caAudit.routes';
 const app = express();
 
 // ── Request ID ────────────────────────────────────────────────────────
